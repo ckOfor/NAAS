@@ -33,3 +33,35 @@
         (ok (map-delete verifiers verifier))
     )
 )
+
+(define-public (verify-asset (asset-id uint) (verification-score uint) (notes (string-utf8 500)))
+    (begin
+        (asserts! (is-verifier tx-sender) ERR-NOT-AUTHORIZED)
+        (asserts! (and (>= verification-score u0) (<= verification-score u100)) ERR-INVALID-SCORE)
+
+        (map-set asset-verifications
+            { asset-id: asset-id }
+            {
+                verifier: tx-sender,
+                verification-score: verification-score,
+                timestamp: block-height,
+                notes: notes
+            }
+        )
+        (ok true)
+    )
+)
+
+;; Read-only Functions
+(define-read-only (is-verifier (address principal))
+    (default-to false (map-get? verifiers address))
+)
+
+(define-read-only (get-asset-verification (asset-id uint))
+    (map-get? asset-verifications { asset-id: asset-id })
+)
+
+(define-read-only (get-contract-owner)
+    contract-owner
+)
+
